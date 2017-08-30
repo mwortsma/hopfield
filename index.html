@@ -1,12 +1,76 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 
+<head>
+    <style>
+        body {font-family: monospace; line-height: 160%; font-size: 18px; }
+        ul {list-style: none; margin: 0; padding: 0;}
+        li {display: inline-block; min-width: 80px; padding: 10px; background-color: #eee; margin: 0;}
+        input {border: 1px dotted #ccc; background: white; font-family: monospace; padding: 10px 20px; font-size: 18px; margin: 20px 10px 20px 0; color: red;}
+        input:focus { background-color:yellow; outline: none;}
+    </style>
+</head>
+
 <body>
+
+<form name="myform" onSubmit="return handleClick()">
+    <input name="Submit"  type="submit" value="1. Add binary vector to remember (add as many as you like)." >
+    <input type="text" id="myVal" placeholder="Enter e.g. 11101101">
+</form>
+
+
+<div id="option">
+    <input name="run" 
+           type="button" 
+           value="2. Initialize Neurons (first press this button, then click them for value = 1)." 
+           onclick="init()" />
+</div>
+
+<div id="option">
+    <input name="run" 
+           type="button" 
+           value="3. Run Hopfield Network." 
+           onclick="run()" />
+</div>
+
+<ul></ul>
+
+
 
 <!-- load the d3.js library -->    
 <script src="https://d3js.org/d3.v4.min.js"></script>
 
 <script>
+
+var dataset = [];
+
+
+function handleClick(event){
+    var binaryStr = document.getElementById("myVal").value;
+    console.log(binaryStr);
+    if(binaryStr.length < 2){
+        alert('Vectors must be > 1 dimensional.');
+        return false;
+    }
+
+    for (var i = 0, len = binaryStr.length; i < len; i++) {
+        if( binaryStr[i] != '1' && binaryStr[i] != 0 ){
+            alert('Must enter a binary string.');
+            return false;
+        }
+    }
+
+    draw(binaryStr);
+    return false;
+}
+
+function draw(val){
+    d3.select("body").select("ul").append("li");
+    dataset.push(val);
+    var p = d3.select("body").selectAll("li")
+    .data(dataset)
+    .text(function(d,i){return i + ": " + d;})
+}
 
 var V = [
     {
@@ -33,6 +97,9 @@ var E = [ [0, 2], [1, 2] ]
 
 var w = 500;
 var h = 400;
+var animationDuration = 300;
+
+var running = false;
 
 
 var svg = d3.select("body")
@@ -42,13 +109,42 @@ var svg = d3.select("body")
 
 
 function drawNodes(data) {
-    svg.selectAll("circle")
-                 .data(data)
-                 .enter()
-                 .append("circle")
-                 .attr("cx", function(d) { return d.x; })
-                 .attr("cy", function(d) { return d.y; })
-                 .attr("r", function(d, i) { return d.r; });
+
+    // DATA JOIN
+    // Join new data with old elements, if any.
+    var nodes = svg.selectAll("circle")
+                 .data(data);
+
+    // UPDATE
+    // Update old elements as needed.
+    nodes.attr("class", "update");
+
+    function stateToColor(n) { 
+        if(n == 1) { return "white"; } 
+        else { return "black"; }
+    }
+
+    // ENTER
+    // Create new elements as needed.
+    //
+    // ENTER + UPDATE
+    // After merging the entered elements with the update selection,
+    // apply operations to both.
+    nodes.enter()
+     .append("circle")
+         .attr("class", "enter")
+     .merge(nodes)
+         .transition()
+         .duration(animationDuration)
+         .style("stroke", "gray")
+         .style("fill", function(d) { return stateToColor(d.state); })
+         .attr("cx", function(d) { return d.x; })
+         .attr("cy", function(d) { return d.y; })
+         .attr("r", function(d, i) { return d.r; });
+
+    // EXIT
+    // Remove old elements as needed.
+    nodes.exit().remove();
 }
 
 function drawEdges(data) {
@@ -74,7 +170,7 @@ function drawEdges(data) {
          .style("stroke", "grey")
      .merge(edges)
          .transition()
-         .duration(100)
+         .duration(animationDuration)
          .attr("x1", function(d) { return V[d[0]].x; })
          .attr("x2", function(d) { return V[d[1]].x; })
          .attr("y1", function(d) { return V[d[0]].y; })
@@ -91,12 +187,28 @@ function update() {
     drawEdges(E);
 }
 
-update();
+function init() {
+    update();
 
-d3.interval(function() {
-  E[0][0] = 1 - E[0][0];
-  update();
-}, 1500);
+    svg.selectAll("text")
+        .data(V)
+        .enter()
+        .append("text")
+        .text(function(d, i) { return i; })
+        .attr("x", function(d) { return d.x + 15; })
+        .attr("y", function(d) { return d.y - 15; });
+}
+
+
+function run() {
+    if(running){ return; }
+    d3.interval(function() {
+      E[0][0] = 1 - E[0][0];
+      V[0].state = 1 - V[0].state;
+      update();
+    }, 1500);
+    running = true;
+}
 
 
 
