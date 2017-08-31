@@ -6,7 +6,7 @@
         body {font-family: monospace; line-height: 160%; font-size: 18px; }
         ul {list-style: none; margin: 0; padding: 0;}
         li {display: inline-block; min-width: 80px; padding: 10px; background-color: #eee; margin: 0;}
-        input {border: 1px dotted #ccc; background: white; font-family: monospace; padding: 10px 20px; font-size: 18px; margin: 20px 10px 20px 0; color: red;}
+        input {border: 1px dotted #ccc; background: white; font-family: monospace; padding: 10px 20px; font-size: 18px; margin: 20px 10px 20px 0; color: mediumslateblue;}
         input:focus { background-color:yellow; outline: none;}
     </style>
 </head>
@@ -117,20 +117,19 @@ function draw(val){
 }
 
 function initEdges() {
-    for(var i = 0; i < n; i++){
-        row = [];
-        for(var j = 0; j < n; j++){
-            if(i == j){
-                row.push(0);
-            } else {
-                if(dataset[0][i] == dataset[0][j]){
-                    row.push(1);
-                } else {
-                    row.push(-1);
+    datasetLength = dataset.length;
+    for(var k = 0; k < datasetLength; k++) {
+        for(var i = 0; i < n; i++){
+            for(var j = 0; j < n; j++){
+                if(i != j){
+                    if(dataset[k][i] == dataset[k][j]){
+                        E[i][j] = E[i][j] + (1/datasetLength);
+                    } else {
+                        E[i][j] = E[i][j] + (-1/datasetLength);
+                    }
                 }
             }
         }
-        E.push(row);
     }
 }
 
@@ -159,7 +158,16 @@ function handleInit(event) {
             dataset[j].push(0);
         }
     }
-    initEdges();
+
+    E = [];
+    for(var i = 0; i < n; i++){
+        E.push(new Float32Array(n));
+    }
+    try {
+        initEdges();
+    } catch(err) {
+        return false;
+    }
     init();
     return false;
 }
@@ -235,7 +243,7 @@ function drawEdges(data) {
          .attr("x2", function(d, i) { return getX(getCol(i)); })
          .attr("y1", function(d, i) { return getY(getRow(i)); })
          .attr("y2", function(d, i) { return getY(getCol(i)); })
-        .style("stroke", function(d) {if(d > 0){return "skyblue";}else{return "tomato";}} )
+        .style("stroke", function(d) {console.log(d.toFixed(2)); if(d > 0){return "skyblue";}else if(d < 0){return "tomato";}else{return "grey"}} )
 
     // EXIT
     // Remove old elements as needed.
@@ -245,7 +253,13 @@ function drawEdges(data) {
 
 function update() {
     drawNodes(V);
-    drawEdges([].concat.apply([], E));
+    flat = new Float32Array(n*n);
+    for(var i = 0; i < n; i++){
+        for(var j = 0; j < n; j++){
+            flat[n*i + j] = E[i][j];
+        }
+    }
+    drawEdges(flat);
 }
 
 var initialized = false;
@@ -279,7 +293,8 @@ function run() {
       for(var i = 0; i < n; i++){
         sum = 0;
         for(var j = 0; j < n; j++){
-            sum = sum + E[i][j]*V[j];
+            var mult = 1;
+            sum = sum + E[i][j]*(-1 + 2*V[j]);
         }
         if(sum >= 0){
             newV.push(1);
