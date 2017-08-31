@@ -243,16 +243,39 @@ function drawEdges(data) {
          .attr("x2", function(d, i) { return getX(getCol(i)); })
          .attr("y1", function(d, i) { return getY(getRow(i)); })
          .attr("y2", function(d, i) { return getY(getCol(i)); })
-        .style("stroke", function(d) {console.log(d.toFixed(2)); if(d > 0){return "skyblue";}else if(d < 0){return "tomato";}else{return "grey"}} )
+        .style("stroke", function(d) {/*console.log(d.toFixed(2));*/ if(d > 0){return "skyblue";}else if(d < 0){return "tomato";}else{return "grey"}} )
 
     // EXIT
     // Remove old elements as needed.
     edges.exit().remove();
 }
 
+function drawText(){
+    var elements = document.getElementsByClassName("text-delete");
+    while(elements.length > 0){
+        elements[0].parentNode.removeChild(elements[0]);
+    }
+    var textToAdd = "Result: " + vecToStr(V);
+    var color = "black";
+    for(var i = 0; i < dataset.length; i++){
+        if(dataset[i].toString() == V.toString()){
+            textToAdd = textToAdd + " ... Staus - Matches ID " + i.toString();
+            color = "green";
+        }
+    }
+    svg.append("text").attr("class", "text-delete").text(textToAdd).attr("x", 10).attr("y", h-10).style("fill", color);
+}
+
 
 function update() {
     drawNodes(V);
+    drawText();
+}
+
+var initialized = false;
+
+function init() {
+
     flat = new Float32Array(n*n);
     for(var i = 0; i < n; i++){
         for(var j = 0; j < n; j++){
@@ -260,11 +283,6 @@ function update() {
         }
     }
     drawEdges(flat);
-}
-
-var initialized = false;
-
-function init() {
 
     update();
 
@@ -289,11 +307,9 @@ function run() {
     d3.interval(function() {
       
       newV = [];
-
       for(var i = 0; i < n; i++){
         sum = 0;
         for(var j = 0; j < n; j++){
-            var mult = 1;
             sum = sum + E[i][j]*(-1 + 2*V[j]);
         }
         if(sum >= 0){
@@ -308,6 +324,7 @@ function run() {
       }
 
       update();
+
     }, 1500);
     running = true;
 }
