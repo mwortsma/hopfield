@@ -1,6 +1,6 @@
 # Sync Viz
-[Click here!](http://htmlpreview.github.io/?https://github.com/mwortsma/hopfield/blob/master/sync.html)
+[Click here!](https://mwortsma.github.io/demo/sync.html)
 
 # Hopfield Nets Viz
-[Click here!](http://htmlpreview.github.io/?https://github.com/mwortsma/network-viz/blob/master/hopfield.html)
+[Click here!](https://mwortsma.github.io/demo/hopfield.html)
 
