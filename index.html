@@ -47,7 +47,6 @@ var dataset = [];
 
 function handleClick(event){
     var binaryStr = document.getElementById("myVal").value;
-    console.log(binaryStr);
     if(binaryStr.length < 2){
         alert('Vectors must be > 1 dimensional.');
         return false;
@@ -76,13 +75,13 @@ var V = [
     {
         'x':200,
         'y':200,
-        'r':10,
+        'r':15,
         'state':0,
     },
     {
         'x':100,
         'y':200,
-        'r':10,
+        'r':15,
         'state':0,
     },
     {
@@ -93,7 +92,17 @@ var V = [
     },
 ]
 
-var E = [ [0, 2], [1, 2] ]
+var n = V.length;
+
+function getRow(i){
+    return Math.floor(i/n);
+}
+
+function getCol(i) {
+    return i % n;
+}
+
+var E = [ [1, 2, 3], [4, 5, 6], [7, 8, 9] ]
 
 var w = 500;
 var h = 400;
@@ -147,12 +156,13 @@ function drawNodes(data) {
     nodes.exit().remove();
 }
 
+
 function drawEdges(data) {
 
     // DATA JOIN
     // Join new data with old elements, if any.
-    var edges = svg.selectAll("line")
-                 .data(data);
+    var edges = svg.selectAll("g")
+                 .data(data)
 
     // UPDATE
     // Update old elements as needed.
@@ -171,10 +181,13 @@ function drawEdges(data) {
      .merge(edges)
          .transition()
          .duration(animationDuration)
-         .attr("x1", function(d) { return V[d[0]].x; })
-         .attr("x2", function(d) { return V[d[1]].x; })
-         .attr("y1", function(d) { return V[d[0]].y; })
-         .attr("y2", function(d) { return V[d[1]].y; })
+         .attr("width", function (d) {
+            return d.intensity;
+         })
+         .attr("x1", function(d, i) { return V[getRow(i)].x; })
+         .attr("x2", function(d, i) { return V[getCol(i)].x; })
+         .attr("y1", function(d, i) { return V[getRow(i)].y; })
+         .attr("y2", function(d, i) { return V[getCol(i)].y; })
 
     // EXIT
     // Remove old elements as needed.
@@ -184,7 +197,7 @@ function drawEdges(data) {
 
 function update() {
     drawNodes(V);
-    drawEdges(E);
+    drawEdges([].concat.apply([], E));
 }
 
 function init() {
