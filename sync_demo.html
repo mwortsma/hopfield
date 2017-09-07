@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<!-- load the d3.js library -->    
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+window.onload = function() {
+
+
+  var svg0 = d3.select("body")
+              .append("svg")
+              .attr("width", 300)
+              .attr("height", 300);
+
+
+   var borderPath = svg0.append("rect")
+  .attr("x", 0)
+  .attr("y", 0)
+  .attr("height", 300)
+  .attr("width", 300)
+  .style("stroke", "black")
+  .style("fill", "none")
+  .style("stroke-width", 1.5);
+
+
+  svg0.append("line").attr("x1", 0).attr("y1", 0).attr("x2", 300).attr("y2", 300)
+    .style("stroke", "purple")
+  	.style("fill", "none")
+  	.style("stroke-width", 1.5);
+
+
+
+
+  radius = 15;
+
+
+	var circles = d3.range(1).map(function() {
+	  return {
+	    x: Math.round(Math.random() * (200 - radius * 2) + radius),
+	    y: Math.round(Math.random() * (200 - radius * 2) + radius)
+	  };
+	});
+
+	var color = d3.scaleOrdinal()
+	    .range(d3.schemeCategory20);
+
+	svg0.selectAll("circle")
+	  .data(circles)
+	  .enter().append("circle")
+	    .attr("cx", function(d) { return d.x; })
+	    .attr("cy", function(d) { return d.y; })
+	    .attr("r", radius)
+	    .style("fill", function(d, i) { return color(i); })
+	    .call(d3.drag()
+	        .on("start", dragstarted)
+	        .on("drag", dragged)
+	        .on("end", dragended));
+
+	function dragstarted(d) {
+	  d3.select(this).raise().classed("active", true);
+	}
+
+	function dragged(d) {
+	  d3.select(this).attr("cx", d.x = d3.event.x).attr("cy", d.y = d3.event.y);
+	}
+
+	function dragended(d) {
+	  d3.select(this).classed("active", false);
+	}
+
+
+
+  var svg = d3.select("body")
+              .append("svg")
+              .attr("width", 600)
+              .attr("height", 600);
+
+  var omega = 0.1;
+  var k_base = 0.08;
+
+  var n = 2;
+  var data = new Float32Array(n);
+
+
+  var color = d3.scaleOrdinal(d3.schemeCategory10);
+
+
+  for(var i = 0; i < n; i++){
+      data[i] = Math.random()*2*Math.PI;
+  }
+
+  function getX(i) {
+      return 300 - 300*Math.cos(i);
+  }
+
+  function getY(i) {
+      return 300 - 300*Math.sin(i);
+  }
+
+  function drawNodes() {
+
+      // DATA JOIN
+      // Join new data with old elements, if any.
+      var nodes = svg.selectAll("circle")
+                   .data(data);
+
+      // UPDATE
+      // Update old elements as needed.
+      nodes.attr("class", "update");
+
+      // ENTER
+      // Create new elements as needed.
+      //
+      // ENTER + UPDATE
+      // After merging the entered elements with the update selection,
+      // apply operations to both.
+      nodes.enter()
+       .append("circle")
+           .attr("class", "enter")
+           .style("stroke", "#000")
+           .style("stroke-width",  "1.5px")
+       .merge(nodes)
+           .transition()
+           .duration(100)
+           .style("stroke", "gray")
+           .style("fill", function(d, i) { return color(i); })
+           .attr("cx", function(d, i) { return getX(d); })
+           .attr("cy", function(d, i) { return getY(d); })
+           .attr("r", 10);
+
+      // EXIT
+      // Remove old elements as needed.
+      nodes.exit().remove();
+  }
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+	function drawText(){
+	    var elements = document.getElementsByClassName("text-delete");
+	    while(elements.length > 0){
+	        elements[0].parentNode.removeChild(elements[0]);
+	    }
+	    svg0.append("text").text("x: " + (circles[0].x/300).toFixed(2)).attr("x", 50).attr("y", 50).style("fill", "green").attr("class", "text-delete");
+  		svg0.append("text").text("y: " + (circles[0].y/300).toFixed(2)).attr("x", 50).attr("y", 70).style("fill", "green").attr("class", "text-delete");
+	}
+
+  d3.interval(function() {
+
+  	  	dist = (circles[0].x - circles[0].y)/50;
+  	  	k = k_base*dist;
+
+        var avg = [0.0, 0.0];
+        var psi = 0;
+        for(var i = 0; i < data.length; i++){
+          avg[0] = avg[0] + Math.cos(data[i]);
+          avg[1] = avg[1] + Math.sin(data[i]);
+          psi = psi + data[i];
+        }
+        avg[0] = avg[0]/data.length;
+        avg[1] = avg[1]/data.length;
+        psi = psi /data.length;
+        var r = Math.sqrt(Math.pow(avg[0],2) + Math.pow(avg[1],2));
+        for(var i = 0; i < data.length; i++){
+          data[i] = (data[i] + omega*Math.random() + k*Math.random()*r*Math.sin(psi - data[i])) % (2*Math.PI);
+        }
+        drawNodes();
+  		drawText()
+
+
+      }, 10);
+
+};
+
+
+</script>
